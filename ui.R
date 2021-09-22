@@ -35,16 +35,73 @@ shinyUI(fluidPage(
                                       fluidPage(
                                           fluidRow(
                                           #    leafletOutput("leaflet_test"),
-                                              leafletOutput("test2")
+                                              mapviewOutput("economic_es")
                                           )
                                       )),
-                             tabPanel(title = "Ecological Ecosystem Services"),
-                             tabPanel(title = "Social Ecosystem Services"))),
-                tabPanel(title = h3(strong(em("Prioritization")))),
+                             tabPanel(title = "Ecological Ecosystem Services",
+                                      fluidPage(
+                                          fluidRow(
+                                            #  leafletOutput("ecological_es")
+                                              mapviewOutput("ecological_es")
+                                          )
+                                      )),
+                             tabPanel(title = "Social Ecosystem Services",
+                                      fluidPage(
+                                          fluidRow(
+                                            #  leafletOutput("social_es")
+                                              mapviewOutput("social_es")
+                                          )
+                                      )
+                                      )
+                             )),
+                tabPanel(title = h3(strong(em("Prioritization"))),
+                         tabsetPanel(
+                             tabPanel(title = "Economic Prioritization",
+                                 fluidPage(
+                                     fluidRow(
+                                         mapviewOutput("economic_priori")
+                                     )
+                             )
+                             
+                         ),
+                         tabPanel(title = "Ecological Prioritization",
+                             fluidPage(
+                                 fluidRow(
+                                     mapviewOutput("ecological_priori")
+                                 ) 
+                             )
+                         ),
+                         tabPanel(title = "Social Prioritization",
+                                  fluidPage(
+                                      fluidRow(
+                                          mapviewOutput("social_priori")
+                                      )
+                                  )
+                                  )
+                         
+                         )),
                 tabPanel(title = h3(strong(em("Geocomputations"))),
                          tabsetPanel(
-                             tabPanel(title = "Hotspot Analysis"),
-                             tabPanel(title = "Spatial Autocorrelation"),
+                             tabPanel(title = "Hotspot Analysis",
+                                      fluidPage(
+                                          uiOutput("hotspot")
+                                          )
+                                      #     fluidRow(
+                                      #        column(width = 6, mapviewOutput("equal_priori_hotspot")),
+                                      #        column(width = 6, mapviewOutput("economic_priori_hotspot"))
+                                      #     )
+                                      # ),
+                                      # fluidPage(
+                                      #     fluidRow(
+                                      #         column(width = 6, mapviewOutput("ecological_priori_hotspot")),
+                                      #         column(width = 6, mapviewOutput("social_priori_hotspot"))
+                                      #     )
+                                      # )
+                                      ),
+                             tabPanel(title = "Spatial Autocorrelation",
+                                      fluidPage(
+                                          uiOutput("try")
+                                      )),
                              tabPanel(title = "Clustering"),
                              tabPanel(title = "Modelling")
                          ))
