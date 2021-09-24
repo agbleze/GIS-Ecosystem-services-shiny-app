@@ -203,8 +203,8 @@ economic_moran <- Moran(norm_economic_es_mean_clip1_raster)
 ecological_moran <- Moran(ecological_es_mean_raster)
 social_moran <- Moran(norm_social_es_mean_raster)
 
-MoranLocal(economic_es_mean_clip1_raster)
-Geary(economic_es_mean_clip1_raster)
+# MoranLocal(economic_es_mean_clip1_raster)
+# Geary(economic_es_mean_clip1_raster)
 
 freqDT(economic_es_mean_clip1_raster)
 raster::corLocal(norm_economic_es_mean_clip1_raster, ecological_es_mean_raster)
@@ -219,21 +219,97 @@ str(ecological_es_mean_raster)
 ## set attributes in reference to norm_ecological_es_mean_raster
 ext_used <- extent(norm_ecological_es_mean_raster)
 crs_used <- crs(norm_ecological_es_mean_raster)
+res_used <- res(norm_ecological_es_mean_raster)
 nrow_used <- dim(norm_ecological_es_mean_raster)[1]
 ncol_used <- dim(norm_ecological_es_mean_raster)[2]
 
-set_norm_economic_es <- raster(norm_economic_es_mean_clip1_raster, values = TRUE, ext = ext_used,
-                               crs = crs_used, nrows = nrow_used, ncols = ncol_used)
+# set_norm_economic_es <- raster(norm_economic_es_mean_clip1_raster, values = TRUE, ext = ext_used,
+#                                crs = crs_used, nrows = nrow_used, ncols = ncol_used)
+# 
+# try_economic <- raster(vals=values(norm_economic_es_mean_clip1_raster),ext=extent(norm_ecological_es_mean_raster),
+#               crs=crs(norm_ecological_es_mean_raster),
+#               nrows=dim(norm_ecological_es_mean_raster)[1],ncols=dim(norm_ecological_es_mean_raster)[2])
 
-try_economic <- raster(vals=values(norm_economic_es_mean_clip1_raster),ext=extent(norm_ecological_es_mean_raster),
-              crs=crs(norm_ecological_es_mean_raster),
-              nrows=dim(norm_ecological_es_mean_raster)[1],ncols=dim(norm_ecological_es_mean_raster)[2])
-
-function(x){
-  raster::`extent<-`(economic_es_mean_clip1_raster, ext_used)
+align_raster_function <- function(x, y){
+  `extent<-`(x, extent(y)) -> x
+  raster::nrow(x) <- raster::nrow(y)
+  raster::ncol(x) <- raster::ncol(y)
 }
+
+##### align extent of norm_social_es_mean_raster with norm_ecological_es_mean_raster
+norm_social_es_mean_raster <- alignExtent(extent = extent(norm_ecological_es_mean_raster), object = norm_social_es_mean_raster)
+
+#norm_social_es_mean_raster <-  align_raster_function(norm_social_es_mean_raster, norm_ecological_es_mean_raster)
+
+#align_raster_function(norm_economic_es_mean_clip1_raster)
+
+`extent<-`(norm_economic_es_mean_clip1_raster, extent(norm_ecological_es_mean_raster)) -> norm_economic_es_mean_clip1_raster
+#raster::`nrow<-`(norm_economic_es_mean_clip1_raster, nrow(norm_ecological_es_mean_raster)) -> norm_economic_es_mean_clip1_raster
+raster::nrow(norm_economic_es_mean_clip1_raster) <- raster::nrow(norm_ecological_es_mean_raster)
+raster::ncol(norm_economic_es_mean_clip1_raster) <- raster::ncol(norm_ecological_es_mean_raster)
+
+
+`extent<-`(norm_social_es_mean_raster, extent(norm_ecological_es_mean_raster)) -> norm_social_es_mean_raster
+raster::nrow(norm_social_es_mean_raster) <- raster::nrow(norm_ecological_es_mean_raster)
+raster::ncol(norm_social_es_mean_raster) <- raster::ncol(norm_ecological_es_mean_raster)
+
+######### set extent of norm_social_es_mean to norm_ecological_es_mean
+norm_social_es_mean_raster <- setExtent(x = norm_social_es_mean_raster, ext = extent(norm_ecological_es_mean_raster))
+
+norm_social_es_mean_raster_try <- raster(vals = values(norm_social_es_mean_raster), nrows = raster::nrow(norm_ecological_es_mean_raster),
+                                     ncols = raster::ncol(norm_ecological_es_mean_raster), 
+                                     resolution = res(norm_ecological_es_mean_raster))
+
+res(norm_social_es_mean_raster)<-res_used
+#res(norm_social_es_mean_raster, res_used) -> try_soc_norm_res
+trysoc <- raster(social_es_mean_filepath, nrows = nrow_used, ext = ext_used)
+`res<-`(trysoc, res_used)
+raster::`nrow<-`(trysoc, nrow_used)
+norm_social_es_mean_raster<- raster::setValues(trysoc)
+
+# norm_social_es_mean_raster <- raster::`extent<-`(norm_social_es_mean_raster, trial_extent)
+# 
+# trial_extent<- extent(norm_ecological_es_mean_raster)
+
+dim(norm_ecological_es_mean_raster)
+dim(trysoc) <- dim(norm_ecological_es_mean_raster)
+
+align_nrows <- function(x, y){
+  raster::nrow(x) <- raster::nrow(y)
+}
+
+align_nrows(norm_social_es_mean_raster, norm_ecological_es_mean_raster)
+
+
+
+all_es_mean_stack <- raster::stack(norm_economic_es_mean_clip1_raster, norm_ecological_es_mean_raster, norm_social_es_mean_raster)
+raster::corLocal(all_es_mean_stack)
+brick_economic_ecological<- raster::brick(norm_economic_es_mean_clip1_raster, norm_ecological_es_mean_raster)
+#remove(norm_social_es_mean_raster)
+
+alignExtent(ext_used, norm_economic_es_mean_clip1_raster)
+
+tryalign <- alignExtent(extent(norm_ecological_es_mean_raster), norm_economic_es_mean_clip1_raster)
+raster::corLocal(brick_economic_ecological)
 
 raster::`extent<-`(norm_economic_es_mean_clip1_raster, ext_used)
 norm_economic_es_mean_clip1_raster
 
-extent(norm_economic_es_mean_clip1_raster, ext_used)
+terra::barplot(norm_economic_es_mean_clip1_raster)
+terra::autocor(economic_es_mean_clip1_raster)
+rastcombine <- c(norm_ecological_es_mean_raster, norm_economic_es_mean_clip1_raster)
+typeof(rastcombine)
+terra::compareGeom(norm_economic_es_mean_clip1_raster, norm_ecological_es_mean_raster)
+rast(norm_economic_es_mean_clip1_raster)
+rast(norm_ecological_es_mean_raster)
+
+terra::density(norm_economic_es_mean_clip1_raster)
+terra::density(norm_ecological_es_mean_raster)
+terra::depth(rast(norm_ecological_es_mean_raster))
+terra::ext(norm_ecological_es_mean_raster)
+terra::pairs(rast(brick_economic_ecological), hist = T)
+terra::persp(norm_ecological_es_mean_raster)
+
+
+r22 <- raster(vals=values(r2),ext=extent(r1),crs=crs(r1),
+              nrows=dim(r1)[1],ncols=dim(r1)[2])
