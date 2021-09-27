@@ -25,8 +25,13 @@ library(rasterDT)
 library(shinydashboard)
 library(shinymaterial)
 library(formattable)
+library(SGAT)
+library(spdep)
+library(ModelMetrics)
+
 
 #MAPBOX = "pk.eyJ1IjoiYWdibGV6ZSIsImEiOiJja3RxYjJsdTgwNHFiMm9xZXlvazU4Z2Q3In0._u5Q5XKA-T1HCCkyzRq5iw"
+
 
 ## file path to ecological ecosystems
 ecological_es_mean_file_path <-  "~/Desktop/AGGREGATE/Ecological_ES_Mean.tif"
@@ -265,15 +270,80 @@ social_moran <- Moran(norm_social_es_mean_raster)
 #                                      ncols = raster::ncol(norm_ecological_es_mean_raster), 
 #                                      resolution = res(norm_ecological_es_mean_raster))
 
-resam_soc_try <- resample(norm_social_es_mean_raster, norm_ecological_es_mean_raster)
-norm_resam_try <- norm_function(resam_soc_try)
-resam_econ_try <- resample(norm_economic_es_mean_clip1_raster, norm_ecological_es_mean_raster)
-norm_resam_econ_try <- norm_function(resam_econ_try)
-all_es_mean_stack <- raster::stack(norm_resam_econ_try, norm_ecological_es_mean_raster, norm_resam_try)
+####### resampling
+resam_equal_weight_raster <- resample(equal_weight_raster, norm_ecological_es_mean_raster)
+norm_resam_equal_weight_raster <- norm_function(resam_equal_weight_raster)
 
-polygon_norm_economic_es <- raster::rasterToPolygons(norm_resam_econ_try)
+resam_social_es_mean_raster <- resample(norm_social_es_mean_raster, norm_ecological_es_mean_raster)
+norm_resam_social_es_mean_raster <- norm_function(resam_social_es_mean_raster)
+resam_economic_es_mean_raster <- resample(norm_economic_es_mean_clip1_raster, norm_ecological_es_mean_raster)
+norm_resam_economic_es_mean_raster <- norm_function(resam_economic_es_mean_raster)
+all_es_mean_stack <- raster::stack(norm_resam_economic_es_mean_raster, norm_ecological_es_mean_raster, norm_resam_social_es_mean_raster)
+
+lonlat_norm_economic_es <- lonlatFromCell(norm_resam_economic_es_mean_raster, 1:ncell(norm_resam_economic_es_mean_raster))
+lonlat_norm_ecological_es <- lonlatFromCell(norm_ecological_es_mean_raster, 1:ncell(norm_ecological_es_mean_raster))
+lonlat_norm_social_es <- lonlatFromCell(norm_resam_social_es_mean_raster, 1:ncell(norm_resam_social_es_mean_raster))
+lonlat_norm_equal_weight_es <- lonlatFromCell(norm_resam_equal_weight_raster, 1:ncell(norm_resam_equal_weight_raster))
+
+df_economic_es_mean<- cbind(as.data.frame(norm_resam_economic_es_mean_raster), as.data.frame(lonlat_norm_economic_es))
+df_ecological_es_mean <- cbind(as.data.frame(norm_ecological_es_mean_raster), as.data.frame(lonlat_norm_ecological_es))
+df_social_es_mean <- cbind(as.data.frame(norm_resam_social_es_mean_raster), as.data.frame(lonlat_norm_social_es))
+df_equal_weight_es <- cbind(as.data.frame(norm_resam_equal_weight_raster), as.data.frame(lonlat_norm_equal_weight_es))
+
+combine_es <- cbind(df_equal_weight_es, df_economic_es_mean, df_ecological_es_mean, df_social_es_mean)
+
+View(combine_es)
+
+### fit non-spatial model
+dat <- na.omit(combine_es)
+
+f1 <- Equal_Weighting_All ~ Economic_ES_MEAN_Clip1 + Ecological_ES_Mean + Social_ES_Mean
+m1 <- glm(f1, data = dat, family = "poisson")
+summary(m1)
+
+res <- m1$residuals
+res <- data.frame(Residuals = res, x = dat$x, y = dat$y)
+
+#plot
+plot <- ggplot(res, aes(x = x, y = y)) + geom_point(aes(colour = Residuals, size = Residuals)) + 
+  geom_point(shape = 1, aes(size = Residuals, colour = sign) ,colour = "black") + 
+  scale_colour_gradient2(low = "#E8F3EB", mid = "#FF1C55",
+                         high = "#560000", midpoint = 8, space = "Lab",
+                         na.value = "grey50", guide = "colourbar")
+plot
+dat <- SpatialPointsDataFrame(cbind(dat$x, dat$y), dat)
+
+# construct weights matrix in weights list form using the 10 nearest neighbors
+lstw <- nb2listw(knn2nb(knearneigh(dat, k = 10)))
+
+# construct wieghts matrix in weights list form using 10 nearest neighbors
+moran.test(residuals.glm(m1), lstw) # result shows there is spatial autocorrelation in the residuals of model
+
+## autocovariate regression to account for SAC
+# DEFINE CELL coordinates
+coords <- as.matrix(cbind(dat$x, dat$y))
+
+#construct autocovariate - increase neigbourhood dist (nbs) by increments of 0.1 till no cells have zero neighbours
+#ac <- autocov_dist(as.numeric(dat$Equal_Weighting_All), coords, nbs = 0.1, longlat = TRUE) # takes forever to run
+
+#View(res)
+
+View(df_equal_weight_es)
+View(df_ecological_es_mean)
+View(df_social_es_mean)
+
+View(as.data.frame(na.omit(norm_resam_economic_es_mean_raster@data@values)))
+
+#polygon_norm_economic_es <- raster::rasterToPolygons(norm_resam_econ_try)
+# View(as.data.frame(polygon_norm_economic_es))
+# try_rasterize <- rasterize(polygon_norm_economic_es)
+# points_norm_resam_economic<- rasterToPoints(norm_resam_econ_try)
+# latlong_norm_resam_economic <- lonlatFromCell(norm_resam_econ_try, 1:ncell(norm_resam_econ_try))
+
+
+#View(as.data.frame(lonlatFromCell(norm_resam_econ_try, 1:ncell(norm_resam_econ_try)))) 
 #### resample to norm_ecological_es_mean
-terra::plot(polygon_norm_economic_es)
+#terra::plot(polygon_norm_economic_es)
 #res(norm_social_es_mean_raster)<-res_used
 
 #cor_1 <- corLocal(norm_resam_try, norm_resam_econ_try, test = TRUE)
@@ -337,5 +407,62 @@ terra::plot(polygon_norm_economic_es)
 # terra::persp(norm_ecological_es_mean_raster)
 # 
 # 
-# r22 <- raster(vals=values(r2),ext=extent(r1),crs=crs(r1),
-#               nrows=dim(r1)[1],ncols=dim(r1)[2])
+norm_ecological_es_mean_raster
+newproj <- crs(norm_ecological_es_mean_raster)
+####### france predictors
+srtm_topo_filepath <- "~/Desktop/france_predictor_data/fra_srtm_topo_100m.tif"
+srtm_slope_filepath <- "~/Desktop/france_predictor_data/fra_srtm_slope_100m.tif"
+pop_dens2002_filepath <- "~/Desktop/france_predictor_data/fra_pd_2002_1km_UNadj.tif"
+dst_waterway_filepath <- "~/Desktop/france_predictor_data/fra_osm_dst_waterway_100m_2016.tif"
+dst_road_filepath <- "~/Desktop/france_predictor_data/fra_osm_dst_road_100m_2016.tif"
+dst_bsgmi_filepath <- "~/Desktop/france_predictor_data/fra_bsgmi_v0a_100m_2013.tif"
+
+
+srtm_topo_raster <- raster(srtm_topo_filepath)
+srtm_slope_raster <- raster(srtm_slope_filepath)
+pop_dens2002_raster <- raster(pop_dens2002_filepath)
+dst_waterway_raster <- raster(dst_waterway_filepath)
+dst_road_raster <- raster(dst_road_filepath)
+dst_bsgmi_raster <- raster(dst_bsgmi_filepath)
+
+mapview(srtm_topo_raster)
+
+topo_reproject <- projectRaster(srtm_topo_raster, crs = newproj)
+slope_reproject <- projectRaster(srtm_slope_raster, crs = newproj)
+pop_dens2002_reproject <- projectRaster(pop_dens2002_raster, crs = newproj)
+dst_waterway_reproject <- projectRaster(dst_waterway_raster, crs = newproj)
+dst_road_reproject <- projectRaster(dst_road_raster, crs = newproj)
+dst_bsgmi_reproject <- projectRaster(dst_bsgmi_raster, crs = newproj)
+
+#### resample and normalize
+resam_srtm_topo_raster <- resample(topo_reproject, norm_ecological_es_mean_raster)
+resam_srtm_slope_raster <- resample(slope_reproject, norm_ecological_es_mean_raster)
+resam_pop_den2002_raster <- resample(pop_dens2002_reproject, norm_ecological_es_mean_raster)
+resam_dst_waterway_raster<- resample(dst_waterway_reproject, norm_ecological_es_mean_raster)
+resam_dst_road_raster <- resample(dst_road_reproject, norm_ecological_es_mean_raster)
+resam_dst_bsgmi_raster <- resample(dst_bsgmi_reproject, norm_ecological_es_mean_raster)
+
+norm_resam_srtm_topo_raster <- norm_function(resam_srtm_topo_raster)
+norm_resam_srtm_slope_raster <- norm_function(resam_srtm_slope_raster)
+norm_resam_pop_den2002_raster <- norm_function(resam_pop_den2002_raster)
+norm_resam_dst_waterway_raster <- norm_function(resam_dst_waterway_raster)
+norm_resam_dst_road_raster <- norm_function(resam_dst_road_raster)
+norm_resam_dst_bsgmi_raster <- norm_function(resam_dst_bsgmi_raster)
+
+
+ccodes()
+#mapview(norm_resam_srtm_topo_raster)
+
+
+
+#######
+# Load data
+ETH_malaria_data <- read.csv("https://raw.githubusercontent.com/HughSt/HughSt.github.io/master/course_materials/week1/Lab_files/Data/mal_data_eth_2009_no_dups.csv", header=T) # Case data
+ETH_Adm_1 <- raster::getData("GADM", country="ETH", level=1) # Admin boundaries
+Oromia <- subset(ETH_Adm_1, NAME_1=="Oromia")
+# Plot both country and data pointsy
+raster::plot(Oromia)
+points(ETH_malaria_data$longitude, ETH_malaria_data$latitude,
+       pch = 16, ylab = "Latitude", xlab="Longitude", col="red", cex=.5)
+
+bioclim_layers <- raster::getData('worldclim', var='bio', res=0.5, lon=38.7578, lat=8.9806) # lng/lat for Addis Ababa
