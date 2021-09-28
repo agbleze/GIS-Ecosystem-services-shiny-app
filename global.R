@@ -29,6 +29,10 @@ library(SGAT)
 library(spdep)
 library(ModelMetrics)
 
+
+#MAPBOX = "pk.eyJ1IjoiYWdibGV6ZSIsImEiOiJja3RxYjJsdTgwNHFiMm9xZXlvazU4Z2Q3In0._u5Q5XKA-T1HCCkyzRq5iw"
+
+
 ## file path to ecological ecosystems
 ecological_es_mean_file_path <-  "~/Desktop/AGGREGATE/Ecological_ES_Mean.tif"
 #ecological_es_sum_file_path <- "~/Desktop/AGGREGATE/Ecological_ES_SUM.tif"
@@ -223,7 +227,7 @@ social_moran <- Moran(norm_social_es_mean_raster)
 
 #### set rasters to have equal extent, crs, dimension to enable stacking and other analysis
 ## set attributes in reference to norm_ecological_es_mean_raster
-# ext_used <- extent(norm_ecological_es_mean_raster)
+ ext_used <- extent(norm_ecological_es_mean_raster)
 # crs_used <- crs(norm_ecological_es_mean_raster)
 # res_used <- res(norm_ecological_es_mean_raster)
 # nrow_used <- dim(norm_ecological_es_mean_raster)[1]
@@ -445,12 +449,182 @@ norm_resam_dst_waterway_raster <- norm_function(resam_dst_waterway_raster)
 norm_resam_dst_road_raster <- norm_function(resam_dst_road_raster)
 norm_resam_dst_bsgmi_raster <- norm_function(resam_dst_bsgmi_raster)
 
+mapview(fran_adm1_shp)
 
-ccodes()
-#mapview(norm_resam_srtm_topo_raster)
+#### subset a smaller region of the map for modelling
+center <- subset(fran_adm1_shp, NAME_1 == "Centre")
+center_transform <- st_transform(center, newproj)
+center_equal_weight_es <- mask(norm_resam_equal_weight_raster, center_transform)
+
+center_norm_resam_topo <- mask(norm_resam_srtm_topo_raster, center_transform)
+center_norm_resam_slope <- mask(norm_resam_srtm_slope_raster, center_transform)
+center_norm_resam_pop_den2002 <- mask(norm_resam_pop_den2002_raster, center_transform)
+center_norm_resam_dst_waterway <- mask(norm_resam_dst_waterway_raster, center_transform)
+center_norm_resam_dst_road <- mask(norm_resam_dst_road_raster, center_transform)
+center_norm_resam_dst_bsgmi <- mask(norm_resam_dst_bsgmi_raster, center_transform)
+
+center_lonlat_norm_equal_weight_es <- lonlatFromCell(center_equal_weight_es, 1:ncell(center_equal_weight_es))
+center_lonlat_topo <- lonlatFromCell(center_norm_resam_topo, 1:ncell(center_norm_resam_topo))
+center_lonlat_slope <- lonlatFromCell(center_norm_resam_slope, 1:ncell(center_norm_resam_slope))
+center_lonlat_pop_den2002 <- lonlatFromCell(center_norm_resam_pop_den2002, 1:ncell(center_norm_resam_pop_den2002))
+center_lonlat_dst_waterway <- lonlatFromCell(center_norm_resam_dst_waterway, 1:ncell(center_norm_resam_dst_waterway))
+center_lonlat_dst_road <- lonlatFromCell(center_norm_resam_dst_road, 1:ncell(center_norm_resam_dst_road))
+center_lonlat_dst_bsgmi <- lonlatFromCell(center_norm_resam_dst_bsgmi, 1:ncell(center_norm_resam_dst_bsgmi))
+
+df_center_equal_es<- cbind(as.data.frame(center_equal_weight_es), as.data.frame(center_lonlat_norm_equal_weight_es))
+df_center_topo <- cbind(as.data.frame(center_norm_resam_topo), as.data.frame(center_lonlat_topo))
+df_center_slope <- cbind(as.data.frame(center_norm_resam_slope), as.data.frame(center_lonlat_slope))
+df_center_pop_den2002 <- cbind(as.data.frame(center_norm_resam_pop_den2002), as.data.frame(center_lonlat_pop_den2002))
+df_center_dst_waterway <- cbind(as.data.frame(center_norm_resam_dst_waterway), as.data.frame(center_lonlat_dst_waterway))
+df_center_dst_road <- cbind(as.data.frame(center_norm_resam_dst_road), as.data.frame(center_lonlat_dst_road))
+df_center_dst_bsgmi <- cbind(as.data.frame(center_norm_resam_dst_bsgmi), as.data.frame(center_lonlat_dst_bsgmi))
+
+center_combine_all <- cbind(df_center_equal_es, df_center_topo, df_center_slope, df_center_pop_den2002,
+                            df_center_dst_waterway, df_center_dst_road, df_center_dst_bsgmi)
 
 
 
+### fit non-spatial model
+dat <- na.omit(center_combine_all)
+f1 <- Equal_Weighting_All ~ fra_srtm_topo_100m + fra_srtm_slope_100m + fra_pd_2002_1km_UNadj +
+  fra_osm_dst_waterway_100m_2016 + fra_osm_dst_road_100m_2016 + fra_bsgmi_v0a_100m_2013
+
+
+#f1 <- Equal_Weighting_All ~ Economic_ES_MEAN_Clip1 + Ecological_ES_Mean + Social_ES_Mean
+m1 <- glm(f1, data = dat, family = "poisson")
+summary(m1)
+
+res <- m1$residuals
+res <- data.frame(Residuals = res, x = dat$x, y = dat$y)
+
+#plot
+plot <- ggplot(res, aes(x = x, y = y)) + geom_point(aes(colour = Residuals, size = Residuals)) + 
+  geom_point(shape = 1, aes(size = Residuals, colour = sign) ,colour = "black") + 
+  scale_colour_gradient2(low = "#E8F3EB", mid = "#FF1C55",
+                         high = "#560000", midpoint = 8, space = "Lab",
+                         na.value = "grey50", guide = "colourbar")
+plot
+dat <- SpatialPointsDataFrame(cbind(dat$x, dat$y), dat)
+
+# construct weights matrix in weights list form using the 10 nearest neighbors
+lstw <- nb2listw(knn2nb(knearneigh(dat, k = 10)))
+
+# moran I test on residuals of model
+moran.test(residuals.glm(m1), lstw) # result shows there is spatial autocorrelation in the residuals of model
+
+## autocovariate regression to account for SAC
+# DEFINE CELL coordinates
+coords <- as.matrix(cbind(dat$x, dat$y))
+
+#construct autocovariate - increase neigbourhood dist (nbs) by increments of 0.1 till no cells have zero neighbours
+ac <- autocov_dist(as.numeric(dat$Equal_Weighting_All), coords, nbs = 9, longlat = TRUE) # takes forever to run
+
+
+# # combine with cell coordinates
+ ac_comb <- data.frame(ac = ac, x = dat$x, y = dat$y)
+ df_ac_comb <- as.data.frame(ac_comb)
+sfp_ac_comb <- SpatialPointsDataFrame(coords, df_ac_comb)
+
+# 
+# # convert to spatial points df
+# coordinates(ac) <- ~ x + y
+# 
+# # rasterize and specify ac as classifying field
+# ac_ras <- rasterize(ac, field = 'ac')
+# 
+
+
+
+# specify new formula
+f2 <- Equal_Weighting_All~ fra_srtm_topo_100m + fra_srtm_slope_100m + fra_pd_2002_1km_UNadj +
+  fra_osm_dst_waterway_100m_2016 + fra_osm_dst_road_100m_2016 + fra_bsgmi_v0a_100m_2013 + ac 
+
+# run new model
+m2 <- glm(f2, data = dat, family = 'poisson')
+summary(m2)
+AIC(m1, m2)
+
+# #extract residuals of spatial model
+# res2 <- m2$residuals
+# 
+# # add coords
+# res2 <- data.frame(Residuals = res2, x = dat$x, y = dat$y)
+# 
+# #plot2
+# plot2 <- ggplot(res2, aes(x = x, y = y)) + geom_point(aes(colour = Residuals, size = Residuals)) + 
+#   geom_point(shape = 1, aes(size = Residuals, colour = sign) ,colour = "black") + 
+#   scale_colour_gradient2(low = "#E8F3EB", mid = "#FF1C55",
+#                          high = "#560000", midpoint = 8, space = "Lab",
+#                          na.value = "grey50", guide = "colourbar")
+# plot(plot2)
+
+# Compute Moran's I using residuals of updated model and weight list
+moran.test(residuals.glm(m2), lstw) 
+
+###### trial lm
+#raster::hist(center_equal_weight_es)
+tr1 <- lm(f1, data = dat)
+summary(tr1)
+tr1$residuals
+tr1$fitted.values
+
+tr1_data <- dat
+tr1_data$residuals <- residuals(tr1)
+tr1_data$fitted <- fitted(tr1)
+
+tr1_data_noduplicate <- tr1_data %>%
+  subset(., select=which(!duplicated(names(.))))
+ 
+
+ggplot(tr1_data_noduplicate, aes(x = x, y = y, col = residuals, size = residuals)) +
+   geom_point() + scale_color_gradient2()
+ 
+tr1.nb <- spdep::dnearneigh(as.matrix(tr1_data_noduplicate[,c("x", "y")]), d1 = 0, d2 = 0.1)
+
+tr1.lw <- nb2listw(tr1.nb, style = "W", zero.policy = FALSE)
+
+lm.morantest(tr1, tr1.lw, zero.policy = F)
+
+lm.LMtests(tr1, tr1.lw, test="LMerr", zero.policy = F) # spatial error
+lm.LMtests(tr1, tr1.lw, test="LMlag", zero.policy = F) # spatial lag model
+lm.LMtests(tr1, tr1.lw, test="all", zero.policy = F) # spatial lag model
+
+##### spatially lagged values
+tr1.lag <- lag.listw(tr1.lw, tr1$residuals, zero.policy = F)
+plot(tr1$residuals, tr1.lag)
+
+moran.plot(tr1$residuals, tr1.lw, zero.policy = F)
+
+lm(tr1.lag ~ tr1$residuals)
+
+#### Monte carlo
+# test of moran using monte carlo method
+tr1_moran <- moran.mc(tr1_data$residuals, tr1.lw, nsim = 999, zero.policy = F)
+tr1_moran
+
+plot(tr1_moran, main="", las=1)
+
+### understanding sensitivity of moran (SAC)
+# empty vector for storage of Moran's I values
+tr1_moran_I <- c()
+
+# loop d through a sequence ranging from 50 to 2000
+for (d in seq(1, 10, 1)) {
+  tr1.nb <- dnearneigh(as.matrix(tr1_data[,c("x", "y")]), d1 = 0, d2 = d)
+  tr1.lw <- nb2listw(tr1.nb, style = "W", zero.policy = T)
+  moran <- moran.mc(tr1$residuals, tr1.lw, nsim = 999, zero.policy = T)
+  tr1_moran_I <- c(tr1_moran_I, moran$statistic)
+}
+
+tr1_moran_I <- data.frame(moran = tr1_moran_I, 
+                      distance = seq(0.1, 20, 1))
+
+ggplot(moran_I, aes(x = distance, y = moran)) + 
+  geom_point() +
+  geom_line()
+
+
+#moran.test(residuals.glm(tr1), lstw)
 #######
 # Load data
 ETH_malaria_data <- read.csv("https://raw.githubusercontent.com/HughSt/HughSt.github.io/master/course_materials/week1/Lab_files/Data/mal_data_eth_2009_no_dups.csv", header=T) # Case data
