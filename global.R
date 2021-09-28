@@ -623,7 +623,6 @@ ggplot(moran_I, aes(x = distance, y = moran)) +
   geom_point() +
   geom_line()
 
-
 #moran.test(residuals.glm(tr1), lstw)
 #######
 # Load data
