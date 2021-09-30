@@ -66,7 +66,7 @@ economic_es_mean_clip1_filepath <- "Economic_ES_MEAN_Clip1.tif"
 # filepath for prioritization
 ecological_prioritized_filepath <- "PRIORITIZE_ES_1/Ecological_ES_Prioritized_mean.tif"
 economic_prioritized_filepath <- "PRIORITIZE_ES_1/Economic_ES_Prioritized_mean.tif"
-social_prioritized_filepath <- "PRIORITIZE_ES_1/SOcial_ES_Prioritized_mean.tif"
+social_prioritized_filepath <- "PRIORITIZE_ES_1/SOcial_ES_prioritized_mean.tif"
 equal_weight_filepath <- "PRIORITIZE_ES_1/Equal_Weighting_All.tif"
 
 # filepath for hotspot for prioritization
@@ -86,25 +86,25 @@ fran_adm4_filepath <- "FRA_adm/FRA_adm4.shp"
 
 ## read raster files
 #ecological_es_sum_raster <- raster(ecological_es_sum_file_path)
-ecological_es_mean_raster <- raster(ecological_es_mean_file_path)
+# ecological_es_mean_raster <- raster(ecological_es_mean_file_path)
 #economic_es_mean_raster <- raster(economic_es_mean_filepath)
 #economic_es_mean_resam_raster <- raster(economic_es_mean_resam_filepath)
-social_es_mean_raster <- raster(social_es_mean_filepath)
+# social_es_mean_raster <- raster(social_es_mean_filepath)
 
-economic_es_mean_clip1_raster <- raster(economic_es_mean_clip1_filepath)
+# economic_es_mean_clip1_raster <- raster(economic_es_mean_clip1_filepath)
 #economic_es_mean_clip1_resam_raster <- raster(economic_es_mean_clip1_resam_filepath)
 #mapview(social_es_mean_raster, query.digits = 1)
 #maxValue(social_prioritized_raster)
-ecological_prioritized_raster<- raster::raster(ecological_prioritized_filepath)
-economic_prioritized_raster <- raster::raster(economic_prioritized_filepath)
-social_prioritized_raster <- raster::raster(social_prioritized_filepath)
+# ecological_prioritized_raster<- raster::raster(ecological_prioritized_filepath)
+# economic_prioritized_raster <- raster::raster(economic_prioritized_filepath)
+# social_prioritized_raster <- raster::raster(social_prioritized_filepath)
 equal_weight_raster <- raster(equal_weight_filepath)
 #mapview(economic_prioritized_raster)
 
-raster(ecological_priori_hotspot_filepath) -> ecological_priori_hotspot_raster
-raster(economic_priori_hotspot_filepath) -> economic_priori_hotspot_raster
-raster(social_priori_hotspot_filepath) -> social_priori_hotspot_raster
-raster(equal_priori_hotspot_filepath) -> equal_priori_hotspot_raster
+# raster(ecological_priori_hotspot_filepath) -> ecological_priori_hotspot_raster
+# raster(economic_priori_hotspot_filepath) -> economic_priori_hotspot_raster
+# raster(social_priori_hotspot_filepath) -> social_priori_hotspot_raster
+# raster(equal_priori_hotspot_filepath) -> equal_priori_hotspot_raster
 
 ## read shp
 #france_shp <- sf::read_sf(france_shp_filepath)
@@ -137,19 +137,19 @@ fran_adm1_shp <- st_read(fran_adm1_filepath)
 # # mapviewGetOption("raster.palette")
 
 
-m1 <- mapview(equal_priori_hotspot_raster, query.type = 'mousemove', 
-              query.digits = 2, legend.opacity = 0, layer.name = "Equal prioritization") 
-
-m2 <- mapview(economic_priori_hotspot_raster, query.type = 'mousemove',
-              query.digits = 2, layer.name = "Economic prioritization")
-
-m3 <- mapview(ecological_priori_hotspot_raster, query.type = 'mousemove',
-              query.digits = 2, layer.name = "Ecological prioritization")
-
-m4 <- mapview(social_priori_hotspot_raster, query.type = 'mousemove',
-              query.digits = 2, layer.name = "Social prioritization", na.alpha = 0.1) # + paste0("Social prioritization hotspot")
-
-sync(list(m1, m2, m3, m4)) 
+# m1 <- mapview(equal_priori_hotspot_raster, query.type = 'mousemove', 
+#               query.digits = 2, legend.opacity = 0, layer.name = "Equal prioritization") 
+# 
+# m2 <- mapview(economic_priori_hotspot_raster, query.type = 'mousemove',
+#               query.digits = 2, layer.name = "Economic prioritization")
+# 
+# m3 <- mapview(ecological_priori_hotspot_raster, query.type = 'mousemove',
+#               query.digits = 2, layer.name = "Ecological prioritization")
+# 
+# m4 <- mapview(social_priori_hotspot_raster, query.type = 'mousemove',
+#               query.digits = 2, layer.name = "Social prioritization", na.alpha = 0.1) # + paste0("Social prioritization hotspot")
+# 
+# sync(list(m1, m2, m3, m4)) 
 
 #View(ecological_es_mean_raster)
 #View(raster::as.data.frame(ecological_es_mean_raster))
@@ -203,18 +203,18 @@ norm_function <- function(x){
   (x - minValue(x)) / (maxValue(x)-minValue(x))
 }
 
-norm_function(economic_es_mean_clip1_raster) -> norm_economic_es_mean_clip1_raster
-norm_function(social_es_mean_raster) -> norm_social_es_mean_raster
-norm_function(ecological_es_mean_raster) -> norm_ecological_es_mean_raster
-  
+# norm_function(economic_es_mean_clip1_raster) -> norm_economic_es_mean_clip1_raster
+# norm_function(social_es_mean_raster) -> norm_social_es_mean_raster
+# norm_function(ecological_es_mean_raster) -> norm_ecological_es_mean_raster
+#   
 # mapview(norm_ecological_es_mean_raster)  
 # mapview(ecological_prioritized_raster)
 
 ### normalize prioritized es rasters
-norm_ecological_prioritized_raster <- norm_function(ecological_prioritized_raster)
+#norm_ecological_prioritized_raster <- norm_function(ecological_prioritized_raster)
 # normalize social prioritized raster
-norm_social_prioritized_raster <- norm_function(social_prioritized_raster)
-norm_economic_prioritized_raster <- norm_function(economic_prioritized_raster)
+#norm_social_prioritized_raster <- norm_function(social_prioritized_raster)
+#norm_economic_prioritized_raster <- norm_function(economic_prioritized_raster)
 # mapview(norm_social_es_mean_raster)
 # mapview(norm_social_prioritized_raster)
 # mapview(norm_ecological_prioritized_raster)
@@ -228,9 +228,9 @@ norm_economic_prioritized_raster <- norm_function(economic_prioritized_raster)
 # positive values shows similar values are closely located 
 # negative values shows dissimilar values are grouped together
 # values ranges from 1 to -1 with 1 being perfect clustering and 0 being perfect randomness
-economic_moran <- Moran(norm_economic_es_mean_clip1_raster)
-ecological_moran <- Moran(ecological_es_mean_raster)
-social_moran <- Moran(norm_social_es_mean_raster)
+# economic_moran <- Moran(norm_economic_es_mean_clip1_raster)
+# ecological_moran <- Moran(ecological_es_mean_raster)
+# social_moran <- Moran(norm_social_es_mean_raster)
 
 # MoranLocal(economic_es_mean_clip1_raster)
 # Geary(economic_es_mean_clip1_raster)
@@ -290,14 +290,14 @@ social_moran <- Moran(norm_social_es_mean_raster)
 #                                      resolution = res(norm_ecological_es_mean_raster))
 
 ####### resampling
-resam_equal_weight_raster <- resample(equal_weight_raster, norm_ecological_es_mean_raster)
-norm_resam_equal_weight_raster <- norm_function(resam_equal_weight_raster)
-
-resam_social_es_mean_raster <- resample(norm_social_es_mean_raster, norm_ecological_es_mean_raster)
-norm_resam_social_es_mean_raster <- norm_function(resam_social_es_mean_raster)
-resam_economic_es_mean_raster <- resample(norm_economic_es_mean_clip1_raster, norm_ecological_es_mean_raster)
-norm_resam_economic_es_mean_raster <- norm_function(resam_economic_es_mean_raster)
-all_es_mean_stack <- raster::stack(norm_resam_economic_es_mean_raster, norm_ecological_es_mean_raster, norm_resam_social_es_mean_raster)
+# resam_equal_weight_raster <- resample(equal_weight_raster, norm_ecological_es_mean_raster)
+# norm_resam_equal_weight_raster <- norm_function(resam_equal_weight_raster)
+# 
+# resam_social_es_mean_raster <- resample(norm_social_es_mean_raster, norm_ecological_es_mean_raster)
+# norm_resam_social_es_mean_raster <- norm_function(resam_social_es_mean_raster)
+# resam_economic_es_mean_raster <- resample(norm_economic_es_mean_clip1_raster, norm_ecological_es_mean_raster)
+# norm_resam_economic_es_mean_raster <- norm_function(resam_economic_es_mean_raster)
+# all_es_mean_stack <- raster::stack(norm_resam_economic_es_mean_raster, norm_ecological_es_mean_raster, norm_resam_social_es_mean_raster)
 
 # lonlat_norm_economic_es <- lonlatFromCell(norm_resam_economic_es_mean_raster, 1:ncell(norm_resam_economic_es_mean_raster))
 # lonlat_norm_ecological_es <- lonlatFromCell(norm_ecological_es_mean_raster, 1:ncell(norm_ecological_es_mean_raster))
