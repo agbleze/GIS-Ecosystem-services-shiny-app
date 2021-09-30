@@ -5,9 +5,11 @@
 
 my_packages = c("shiny", "shinydashboard", "shinycssloaders", "shinyanimate", "shinydashboardPlus",
                 "shinyEffects", "shinybusy", "shinyBS", "magrittr", "readr", 
-                "tidyverse", "ggplot2", "dplyr", "magrittr", "formattable", "fontawesome",
-                "haven", "caret", "h2o", "rsample", "DT", "plotly", "purrr", "readr", "shinyWidgets",
-                "tibble", "utils")
+                "tidyverse", "ggplot2", "dplyr", "magrittr", "formattable", "fontawesome", "shinyWidgets",
+                "tibble", "utils", "leaflet", "tmap", "raster", "rasterVis", "sp", "terra", "sf", "ggplot2",
+                "tidyverse", "tmaptools", "mapview", "mapdeck", "terra", "RColorBrewer", "leafsync",
+                "plainview", "leafem", "rasterDT", "SGAT", "spdep", "ModelMetrics", "colourvalues", 
+                "googlePolylines", "spatialwidget")
 
 install_if_missing = function(p) {
   if (p %in% rownames(installed.packages()) == FALSE) {
