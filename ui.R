@@ -1,11 +1,4 @@
-#
-# This is the user-interface definition of a Shiny web application. You can
-# run the application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
+# UI of app
 
 library(shiny)
 library(leaflet)
@@ -19,11 +12,11 @@ shinyUI(fluidPage(
     # Sidebar with a slider input for number of bins
     sidebarLayout(
         sidebarPanel(
-            sliderInput("bins",
-                        "Number of bins:",
-                        min = 1,
-                        max = 50,
-                        value = 30)
+            # sliderInput("bins",
+            #             "Number of bins:",
+            #             min = 1,
+            #             max = 50,
+            #             value = 30)
         ),
 
         # Show a plot of the generated distribution
@@ -82,6 +75,12 @@ shinyUI(fluidPage(
                          )),
                 tabPanel(title = h3(strong(em("Geocomputations"))),
                          tabsetPanel(
+                             tabPanel(title = "Exploratory Data Analysis",
+                                      fluidPage(
+                                          fluidRow(
+                                              plotOutput("correlation_es")
+                                          )
+                                      )),
                              tabPanel(title = "Hotspot Analysis",
                                       fluidPage(
                                           uiOutput("hotspot")
@@ -100,9 +99,20 @@ shinyUI(fluidPage(
                                       ),
                              tabPanel(title = "Spatial Autocorrelation",
                                       fluidPage(
-                                          uiOutput("try")
+                                          fluidRow(
+                                              valueBoxOutput("economic_spa_autocorr"),
+                                              valueBoxOutput("ecological_spa_autocorr"),
+                                              valueBoxOutput("social_spa_autocorr")
+                                              
+                                          )
                                       )),
-                             tabPanel(title = "Clustering"),
+                             tabPanel(title = "Clustering",
+                                      fluidPage(
+                                          fluidRow(
+                                              
+                                          )
+                                          
+                                      )),
                              tabPanel(title = "Modelling")
                          ))
             )
