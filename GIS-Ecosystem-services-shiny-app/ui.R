@@ -28,21 +28,24 @@ shinyUI(fluidPage(
                                       fluidPage(
                                           fluidRow(
                                           #    leafletOutput("leaflet_test"),
-                                              mapviewOutput("economic_es")
+                                              mapviewOutput("economic_es") %>%
+                                                  withSpinner()
                                           )
                                       )),
                              tabPanel(title = "Ecological Ecosystem Services",
                                       fluidPage(
                                           fluidRow(
                                             #  leafletOutput("ecological_es")
-                                              mapviewOutput("ecological_es")
+                                              mapviewOutput("ecological_es") %>%
+                                                  withSpinner()
                                           )
                                       )),
                              tabPanel(title = "Social Ecosystem Services",
                                       fluidPage(
                                           fluidRow(
                                             #  leafletOutput("social_es")
-                                              mapviewOutput("social_es")
+                                              mapviewOutput("social_es") %>%
+                                                  withSpinner()
                                           )
                                       )
                                       )
@@ -52,7 +55,8 @@ shinyUI(fluidPage(
                              tabPanel(title = "Economic Prioritization",
                                  fluidPage(
                                      fluidRow(
-                                         mapviewOutput("economic_priori")
+                                         mapviewOutput("economic_priori") %>%
+                                             withSpinner()
                                      )
                              )
                              
@@ -60,14 +64,16 @@ shinyUI(fluidPage(
                          tabPanel(title = "Ecological Prioritization",
                              fluidPage(
                                  fluidRow(
-                                     mapviewOutput("ecological_priori")
+                                     mapviewOutput("ecological_priori") %>%
+                                         withSpinner()
                                  ) 
                              )
                          ),
                          tabPanel(title = "Social Prioritization",
                                   fluidPage(
                                       fluidRow(
-                                          mapviewOutput("social_priori")
+                                          mapviewOutput("social_priori") %>%
+                                              withSpinner()
                                       )
                                   )
                                   )
@@ -78,12 +84,14 @@ shinyUI(fluidPage(
                              tabPanel(title = "Exploratory Data Analysis",
                                       fluidPage(
                                           fluidRow(
-                                              plotOutput("correlation_es")
+                                              plotOutput("correlation_es") %>%
+                                                  withSpinner()
                                           )
                                       )),
                              tabPanel(title = "Hotspot Analysis",
                                       fluidPage(
-                                          uiOutput("hotspot")
+                                          uiOutput("hotspot") %>%
+                                              withSpinner()
                                           )
                                       #     fluidRow(
                                       #        column(width = 6, mapviewOutput("equal_priori_hotspot")),
@@ -100,20 +108,21 @@ shinyUI(fluidPage(
                              tabPanel(title = "Spatial Autocorrelation",
                                       fluidPage(
                                           fluidRow(
-                                              valueBoxOutput("economic_spa_autocorr"),
-                                              valueBoxOutput("ecological_spa_autocorr"),
-                                              valueBoxOutput("social_spa_autocorr")
+                                              valueBoxOutput("economic_spa_autocorr") %>% withSpinner(),
+                                              valueBoxOutput("ecological_spa_autocorr") %>% withSpinner(),
+                                              valueBoxOutput("social_spa_autocorr") %>%
+                                                  withSpinner()
                                               
                                           )
-                                      )),
-                             tabPanel(title = "Clustering",
-                                      fluidPage(
-                                          fluidRow(
-                                              
-                                          )
-                                          
-                                      )),
-                             tabPanel(title = "Modelling")
+                                      )) #,
+                             # tabPanel(title = "Clustering",
+                             #          fluidPage(
+                             #              fluidRow(
+                             #                  
+                             #              )
+                             #              
+                             #          )),
+                             # tabPanel(title = "Modelling")
                          ))
             )
         )

@@ -14,13 +14,16 @@ library(viridis)
 # Define server logic required to draw a histogram
 shinyServer(function(input, output, session) {
    #     sync(m1, m2, m3, m4)
+   ecological_es_mean_raster <- raster(ecological_es_mean_file_path)
+   economic_es_mean_clip1_raster <- raster(economic_es_mean_clip1_filepath)
+   social_es_mean_raster <- raster(social_es_mean_filepath)
+   
  output$economic_es <- renderMapview({
      # leaflet() %>%
      #     addTiles() %>%
      #     addRasterImage(economic_es_mean_raster, colors = pal, opacity = 0.5) %>%
      #     addLegend(values = values(economic_es_mean_raster), pal = pal, title = "Amount (Normalized)")
          
-   economic_es_mean_clip1_raster <- raster(economic_es_mean_clip1_filepath)
          mapview::mapview(economic_es_mean_clip1_raster, layer.name = "Economic Ecosystem Services")
  })
  
@@ -30,7 +33,7 @@ shinyServer(function(input, output, session) {
      #     addRasterImage(ecological_es_mean_raster, colors = pal) %>%
      #     addLegend(values = values(ecological_es_mean_raster), pal = pal, title = "Amount (Normalized)")
      #     
-    ecological_es_mean_raster <- raster(ecological_es_mean_file_path)     
+    # ecological_es_mean_raster <- raster(ecological_es_mean_file_path)     
     mapview::mapview(ecological_es_mean_raster, layer.name = "Ecological Ecosystem Services")
  })
  
@@ -40,7 +43,7 @@ shinyServer(function(input, output, session) {
      #     addRasterImage(social_es_mean_raster, colors = pal) %>%
      #     addLegend(values = values(social_es_mean_raster), pal = pal, title = "Amount (Normalized)")
      #     
-          social_es_mean_raster <- raster(social_es_mean_filepath)
+     #     social_es_mean_raster <- raster(social_es_mean_filepath)
          mapview::mapview(social_es_mean_raster, layer.name = "Social Ecosystem Services")
  })
  
@@ -64,9 +67,9 @@ shinyServer(function(input, output, session) {
    social_prioritized_raster <- raster::raster(social_prioritized_filepath)
    norm_social_prioritized_raster <- norm_function(social_prioritized_raster)
    
-     mapview::mapView(norm_social_prioritized_raster, layer.name = "Social prioritization") + 
-                 mapview::mapview(fran_adm1_shp, zcol = "NAME_1", alpha.regions = 0, legend = FALSE,
-                                  layer.name = "Regions of France")
+     mapview::mapView(norm_social_prioritized_raster, layer.name = "Social prioritization") 
+     # +  mapview::mapview(fran_adm1_shp, zcol = "NAME_1", alpha.regions = 0, legend = FALSE,
+     #                              layer.name = "Regions of France")
  })
  
  
@@ -124,11 +127,11 @@ shinyServer(function(input, output, session) {
    
    ## read raster files
    #ecological_es_sum_raster <- raster(ecological_es_sum_file_path)
-    ecological_es_mean_raster <- raster(ecological_es_mean_file_path)
+   # ecological_es_mean_raster <- raster(ecological_es_mean_file_path)
    #economic_es_mean_raster <- raster(economic_es_mean_filepath)
    #economic_es_mean_resam_raster <- raster(economic_es_mean_resam_filepath)
-    social_es_mean_raster <- raster(social_es_mean_filepath)
-    economic_es_mean_clip1_raster <- raster(economic_es_mean_clip1_filepath)
+   # social_es_mean_raster <- raster(social_es_mean_filepath)
+    # economic_es_mean_clip1_raster <- raster(economic_es_mean_clip1_filepath)
    
    # resam_equal_weight_raster <- resample(equal_weight_raster, norm_ecological_es_mean_raster)
    # norm_resam_equal_weight_raster <- norm_function(resam_equal_weight_raster)
@@ -147,7 +150,7 @@ shinyServer(function(input, output, session) {
  
  output$economic_spa_autocorr <- renderValueBox({
         # h4("Spatial autocorrelation")
-   economic_es_mean_clip1_raster <- raster(economic_es_mean_clip1_filepath)
+ #  economic_es_mean_clip1_raster <- raster(economic_es_mean_clip1_filepath)
 #   norm_economic_es_mean_clip1_raster <- norm_function(economic_es_mean_clip1_raster)
    
    economic_moran <- Moran(economic_es_mean_clip1_raster)
@@ -160,7 +163,7 @@ shinyServer(function(input, output, session) {
  })
  
  output$ecological_spa_autocorr <- renderValueBox({
-   ecological_es_mean_raster <- raster(ecological_es_mean_file_path)
+  # ecological_es_mean_raster <- raster(ecological_es_mean_file_path)
    ecological_moran <- Moran(ecological_es_mean_raster)
    
          valueBox(value = h2(formattable::comma(ecological_moran, digits = 3), style = "background: green"), 
@@ -169,7 +172,7 @@ shinyServer(function(input, output, session) {
  
  output$social_spa_autocorr <- renderValueBox({
    
-   social_es_mean_raster <- raster(social_es_mean_filepath)
+  # social_es_mean_raster <- raster(social_es_mean_filepath)
    
    social_moran <- Moran(social_es_mean_raster)
    
