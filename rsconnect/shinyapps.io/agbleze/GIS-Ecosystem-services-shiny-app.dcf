@@ -1,0 +1,13 @@
+name: GIS-Ecosystem-services-shiny-app
+title: GIS-Ecosystem-services-shiny-app
+username:
+account: agbleze
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 4764209
+bundleId: 5097891
+url: https://agbleze.shinyapps.io/GIS-Ecosystem-services-shiny-app/
+when: 1633205127.92294
+lastSyncTime: 1633205127.92296
+asMultiple: FALSE
+asStatic: FALSE
